@@ -1,5 +1,7 @@
 pipeline {
-    agent any tools {
+    agent any
+
+    tools {
         maven 'Maven-3.9.8'
         jdk 'JDK-21'
     }
@@ -8,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout the code from the Git repository
-                git url:'https://github.com/sep-2024-trivandrum/authentication-service.git', branch:'main'
+                git url: 'https://github.com/sep-2024-trivandrum/authentication-service.git', branch: 'main'
             }
         }
 
