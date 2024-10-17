@@ -1,11 +1,14 @@
 pipeline {
-    agent any
+    agent any tools {
+        maven 'my-maven'
+        jdk 'my-jdk'
+    }
 
     stages {
         stage('Checkout') {
             steps {
                 // Checkout the code from the Git repository
-                git 'https://github.com/abijith-suresh/authentication-service.git'
+                git url:'https://github.com/sep-2024-trivandrum/authentication-service.git', branch:'main'
             }
         }
 
