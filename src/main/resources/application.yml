@@ -4,11 +4,24 @@ server:
 spring:
   application:
     name: auth-service
+
   data:
     mongodb:
       uri: mongodb://localhost:27017/authdb
+
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: "*"
+    endpoint:
+      health:
+        show-details: ALWAYS
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    prefer-ip-address: true
