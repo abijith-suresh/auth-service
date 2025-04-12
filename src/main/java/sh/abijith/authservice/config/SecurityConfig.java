@@ -22,7 +22,7 @@ public class SecurityConfig {
     @Value("${AUTH_ACTUATOR_USERNAME:admin}")
     private String actuatorUsername;
 
-    @Value("${AUTH_ACTUATOR_PASSWORD}")
+    @Value("${AUTH_ACTUATOR_PASSWORD:admin}")
     private String actuatorPassword;
 
     @Bean
