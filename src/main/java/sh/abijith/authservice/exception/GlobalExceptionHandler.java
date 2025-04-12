@@ -28,6 +28,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.UNAUTHORIZED, request);
     }
 
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidRefreshTokenException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, HttpStatus.UNAUTHORIZED, request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         String message = ex.getBindingResult().getAllErrors().getFirst().getDefaultMessage();

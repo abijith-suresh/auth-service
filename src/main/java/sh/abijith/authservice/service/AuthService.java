@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import sh.abijith.authservice.dto.AuthResponse;
 import sh.abijith.authservice.dto.LoginRequest;
+import sh.abijith.authservice.dto.RefreshTokenRequest;
 import sh.abijith.authservice.dto.RegisterRequest;
 import sh.abijith.authservice.exception.InvalidCredentialsException;
 import sh.abijith.authservice.exception.UserAlreadyExistsException;
@@ -41,5 +42,13 @@ public class AuthService {
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
         return new AuthResponse(accessToken, refreshToken, "Login Successful");
+    }
+
+
+    public AuthResponse refresh(RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenRequest.getRefreshToken();
+        String newAccessToken = jwtService.generateTokenFromRefreshToken(refreshToken);
+
+        return new AuthResponse(newAccessToken, refreshToken, "Token refreshed successfully");
     }
 }
