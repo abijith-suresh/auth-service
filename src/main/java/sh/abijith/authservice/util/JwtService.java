@@ -1,8 +1,11 @@
 package sh.abijith.authservice.util;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import sh.abijith.authservice.exception.InvalidRefreshTokenException;
+import sh.abijith.authservice.exception.InvalidTokenException;
 import sh.abijith.authservice.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -50,6 +53,25 @@ public class JwtService {
                     .compact();
         } catch (Exception e) {
             throw new InvalidRefreshTokenException("Invalid refresh token");
+        }
+    }
+
+    /**
+     * Validate the JWT token.
+     * @param token JWT token to validate
+     * @return true if the token is valid, false otherwise
+     */
+    public void validateToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(SECRET)
+                    .parseClaimsJws(token)
+                    .getBody();
+            if (claims.getExpiration().before(new java.util.Date())) {
+                throw new InvalidTokenException("Token is expired");
+            }
+        } catch (SignatureException | io.jsonwebtoken.ExpiredJwtException | io.jsonwebtoken.MalformedJwtException e) {
+            throw new InvalidTokenException("Invalid token: " + e.getMessage());
         }
     }
 

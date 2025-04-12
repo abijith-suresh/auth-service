@@ -63,8 +63,11 @@ public class AuthService {
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
+        resetFailedAttempts(user);
+
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
+
         return new AuthResponse(accessToken, refreshToken, "Login Successful");
     }
 
@@ -73,6 +76,10 @@ public class AuthService {
         String newAccessToken = jwtService.generateTokenFromRefreshToken(refreshToken);
 
         return new AuthResponse(newAccessToken, refreshToken, "Token refreshed successfully");
+    }
+
+    public void validateToken(String token){
+        jwtService.validateToken(token);
     }
 
     private void incrementFailedAttempts(User user) {
