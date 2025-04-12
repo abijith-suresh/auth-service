@@ -3,11 +3,9 @@ package sh.abijith.authservice.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import sh.abijith.authservice.client.UserClient;
 import sh.abijith.authservice.config.LoginSecurityProperties;
-import sh.abijith.authservice.dto.AuthResponse;
-import sh.abijith.authservice.dto.LoginRequest;
-import sh.abijith.authservice.dto.RefreshTokenRequest;
-import sh.abijith.authservice.dto.RegisterRequest;
+import sh.abijith.authservice.dto.*;
 import sh.abijith.authservice.exception.AccountLockedException;
 import sh.abijith.authservice.exception.InvalidCredentialsException;
 import sh.abijith.authservice.exception.UserAlreadyExistsException;
@@ -25,6 +23,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final LoginSecurityProperties loginSecurityProps;
+    private final UserClient userClient;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -35,6 +34,15 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
+
+        var profile = new UserProfileRequest(
+                user.getId(),
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName()
+        );
+        userClient.createUserProfile(profile);
+
         return new AuthResponse(null, null, "Registration is Successful. Please Login Again");
     }
 
@@ -84,7 +92,7 @@ public class AuthService {
     }
 
     private boolean isLockExpired(User user) {
-        long lockDurationMillis = loginSecurityProps.getLockDurationMinutes() * 60 * 1000;
+        long lockDurationMillis = (long) loginSecurityProps.getLockDurationMinutes() * 60 * 1000;
         return new Date().getTime() - user.getLockTime().getTime() >= lockDurationMillis;
     }
 
