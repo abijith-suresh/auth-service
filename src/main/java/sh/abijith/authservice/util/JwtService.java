@@ -1,7 +1,9 @@
 package sh.abijith.authservice.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import sh.abijith.authservice.exception.InvalidRefreshTokenException;
@@ -10,12 +12,22 @@ import sh.abijith.authservice.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
 public class JwtService {
+
     @Value("${jwt.secret}")
-    private String SECRET;
+    private String secret;
+
+    private SecretKey secretKey;
+
+    @PostConstruct
+    public void init() {
+        secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     /**
      * Generates a JWT access token for the given user.
@@ -29,7 +41,7 @@ public class JwtService {
                 .claim("role", user.getRole())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
-                .signWith(SignatureAlgorithm.HS256, SECRET.getBytes())
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -45,7 +57,7 @@ public class JwtService {
                 .setSubject(user.getEmail())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 2592000000L)) // 30 days
-                .signWith(SignatureAlgorithm.HS256, SECRET.getBytes())
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -58,8 +70,9 @@ public class JwtService {
      */
     public String generateTokenFromRefreshToken(String refreshToken) {
         try {
-            var claims = Jwts.parser()
-                    .setSigningKey(SECRET.getBytes())
+            var claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
                     .parseClaimsJws(refreshToken)
                     .getBody();
 
@@ -69,7 +82,7 @@ public class JwtService {
                     .setSubject(email)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
-                    .signWith(SignatureAlgorithm.HS256, SECRET.getBytes())
+                    .signWith(secretKey, SignatureAlgorithm.HS256)
                     .compact();
         } catch (Exception e) {
             throw new InvalidRefreshTokenException("Invalid refresh token");
@@ -84,10 +97,12 @@ public class JwtService {
      */
     public void validateToken(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .setSigningKey(SECRET)
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
+            
             if (claims.getExpiration().before(new java.util.Date())) {
                 throw new InvalidTokenException("Token is expired");
             }
@@ -104,8 +119,9 @@ public class JwtService {
      * @return the subject (email) from the token
      */
     public String extractUsername(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET.getBytes())
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
