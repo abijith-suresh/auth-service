@@ -7,6 +7,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,5 +23,7 @@ public class User {
     private String password;
     private String role;
     private boolean enabled = true;
+    private int failedAttempts = 0;
     private boolean locked = false;
+    private Date lockTime;
 }

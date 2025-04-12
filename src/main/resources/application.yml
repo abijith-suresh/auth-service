@@ -4,6 +4,11 @@ server:
 jwt:
   secret: ${JWT_SECRET:default-fallback-secret}
 
+auth:
+  login:
+    max-failed-attempts: 5
+    lock-duration-minutes: 15
+
 spring:
   application:
     name: auth-service
