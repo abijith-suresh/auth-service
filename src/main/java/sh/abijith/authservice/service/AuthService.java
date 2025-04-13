@@ -7,10 +7,12 @@ import sh.abijith.authservice.client.UserClient;
 import sh.abijith.authservice.config.LoginSecurityProperties;
 import sh.abijith.authservice.dto.*;
 import sh.abijith.authservice.exception.*;
+import sh.abijith.authservice.mapper.UserMapper;
 import sh.abijith.authservice.model.User;
 import sh.abijith.authservice.repository.UserRepository;
 import sh.abijith.authservice.util.JwtService;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Service
@@ -21,6 +23,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final LoginSecurityProperties loginSecurityProps;
     private final UserClient userClient;
+    private final UserMapper userMapper;
 
     /**
      * Registers a new user and creates a corresponding user profile in the user service.
@@ -36,14 +39,13 @@ public class AuthService {
         var user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRoles(request.getRoles());
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+
         userRepository.save(user);
 
-        var profile = new UserProfileRequest(
-                user.getId(),
-                request.getEmail(),
-                request.getFirstName(),
-                request.getLastName()
-        );
+        var profile = userMapper.toUserProfileRequest(user, request);
         userClient.createUserProfile(profile);
 
         return new AuthResponse(null, null, "Registration is Successful. Please Login Again");
@@ -130,6 +132,7 @@ public class AuthService {
         user.setFailedAttempts(0);
         user.setLocked(false);
         user.setLockTime(null);
+        user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
     }
 
@@ -153,6 +156,7 @@ public class AuthService {
         user.setLocked(false);
         user.setLockTime(null);
         user.setFailedAttempts(0);
+        user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
     }
 

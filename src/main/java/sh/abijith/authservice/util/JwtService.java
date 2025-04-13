@@ -8,13 +8,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import sh.abijith.authservice.exception.InvalidRefreshTokenException;
 import sh.abijith.authservice.exception.InvalidTokenException;
+import sh.abijith.authservice.model.Role;
 import sh.abijith.authservice.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
@@ -36,9 +40,13 @@ public class JwtService {
      * @return a signed JWT access token
      */
     public String generateToken(User user) {
+        String roles = user.getRoles().stream()
+                .map(Role::name)
+                .collect(Collectors.joining(","));
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
-                .claim("role", user.getRole())
+                .claim("role", roles)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
                 .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -102,7 +110,7 @@ public class JwtService {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-            
+
             if (claims.getExpiration().before(new java.util.Date())) {
                 throw new InvalidTokenException("Token is expired");
             }
@@ -126,4 +134,19 @@ public class JwtService {
                 .getBody()
                 .getSubject();
     }
+
+    public Set<Role> extractRoles(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        String rolesString = claims.get("roles", String.class);
+
+        return Arrays.stream(rolesString.split(","))
+                .map(roleName -> Role.valueOf(roleName))
+                .collect(Collectors.toSet());
+    }
+
 }
